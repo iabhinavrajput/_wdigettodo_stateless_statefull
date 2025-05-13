@@ -32,7 +32,14 @@ class _TodoAppState extends State<TodoApp> {
       setState(() {
         _todos.add(_controller.text);
       });
+      _controller.clear();
     }
+  }
+
+  void _removeTodo(int index) {
+    setState(() {
+      _todos.removeAt(index);
+    });
   }
 
   @override
