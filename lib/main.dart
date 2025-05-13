@@ -44,6 +44,28 @@ class _TodoAppState extends State<TodoApp> {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(title: Text("To-Do List")),
+      body: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: TextField(controller: _controller)),
+              IconButton(onPressed: _addTodos, icon: Icon(Icons.add),
+
+              ),
+              
+            ],
+          ),
+          Expanded(child: ListView.builder(
+                itemCount: _todos.length,
+                itemBuilder: (_, index) => ListTile(
+                  title: Text(_todos[index]),
+                  trailing: IconButton(onPressed: () => _removeTodo(index), icon: Icon(Icons.delete)),
+                ),
+              ))
+        ],
+      ),
+    );
   }
 }
