@@ -26,7 +26,15 @@ class TodoApp extends StatefulWidget {
 class _TodoAppState extends State<TodoApp> {
   final List<String> _todos = [];
   final _controller = TextEditingController();
-  
+
+  void _addTodos() {
+    if (_controller.text.isNotEmpty) {
+      setState(() {
+        _todos.add(_controller.text);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return const Placeholder();
