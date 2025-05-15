@@ -1,15 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:todo/auth_provider.dart';
 import 'package:todo/firebase_options.dart';
 import 'package:todo/todo_notifier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(ProviderScope(child: MyApp()));
 }
 
@@ -26,8 +26,21 @@ class TodoApp extends ConsumerWidget {
   final _controller = TextEditingController();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final todos = ref.watch(todoProvider);
-    final todoNotifier = ref.read(todoProvider.notifier);
+    final authState = ref.watch(authStateProvider);
+    return authState.when(
+      data: (user) {
+        if (user != null) {
+          return TodoApp();
+        } else {
+          return LoginScreen();
+        }
+      },
+      loading: () => Scaffold(body: Center(child: CircularProgressIndicator(),),),
+      error: (e,_) => Scaffold(body: Center(child: Text('Error: $e'),),)
+    );
+    // final todos = ref.watch(todoProvider);
+    // final todoNotifier = ref.read(todoProvider.notifier);
+
     return Scaffold(
       appBar: AppBar(title: Text("To-Do with riverpod")),
       body: Column(
