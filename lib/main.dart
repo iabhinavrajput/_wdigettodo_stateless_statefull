@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo/todo_notifier.dart';
 
@@ -18,7 +19,6 @@ class MyApp extends StatelessWidget {
 class TodoApp extends ConsumerWidget {
   final _controller = TextEditingController();
   @override
-
   Widget build(BuildContext context, WidgetRef ref) {
     final todos = ref.watch(todoProvider);
     final todoNotifier = ref.read(todoProvider.notifier);
@@ -44,16 +44,30 @@ class TodoApp extends ConsumerWidget {
           Expanded(
             child: ListView.builder(
               itemCount: todos.length,
-              itemBuilder:
-                  (_, index) => ListTile(
-                    title: Text(todos[index]),
-                    trailing: IconButton(
-                      onPressed: () {
-                        todoNotifier.remove(index);
-                      },
-                      icon: Icon(Icons.delete),
+              itemBuilder: (_, index) {
+                final todo = todos[index];
+                return ListTile(
+                  leading: Checkbox(
+                    value: todo.isDone,
+                    onChanged: (_) {
+                      todoNotifier.toggleDone(index);
+                    },
+                  ),
+                  title: Text(
+                    todo.text,
+                    style: TextStyle(
+                      decoration:
+                          todo.isDone ? TextDecoration.lineThrough : null,
                     ),
                   ),
+                  trailing: IconButton(
+                    onPressed: () {
+                      todoNotifier.remove(index);
+                    },
+                    icon: Icon(Icons.delete),
+                  ),
+                );
+              },
             ),
           ),
         ],
