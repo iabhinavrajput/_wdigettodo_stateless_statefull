@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:todo/todo_notifier.dart';
 
 void main() {
-  runApp(ProviderScope(child: MyApp(),));
+  runApp(ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -10,61 +11,51 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: TodoApp(),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, home: TodoApp());
   }
 }
 
-class TodoApp extends StatefulWidget {
-  const TodoApp({super.key});
-
-  @override
-  State<TodoApp> createState() => _TodoAppState();
-}
-
-class _TodoAppState extends State<TodoApp> {
-  final List<String> _todos = [];
+class TodoApp extends ConsumerWidget {
   final _controller = TextEditingController();
-
-  void _addTodos() {
-    if (_controller.text.isNotEmpty) {
-      setState(() {
-        _todos.add(_controller.text);
-      });
-      _controller.clear();
-    }
-  }
-
-  void _removeTodo(int index) {
-    setState(() {
-      _todos.removeAt(index);
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
+
+  Widget build(BuildContext context, WidgetRef ref) {
+    final todos = ref.watch(todoProvider);
+    final todoNotifier = ref.read(todoProvider.notifier);
     return Scaffold(
-      appBar: AppBar(title: Text("To-Do List")),
+      appBar: AppBar(title: Text("To-Do with riverpod")),
       body: Column(
         children: [
-          Row(
-            children: [
-              Expanded(child: TextField(controller: _controller)),
-              IconButton(onPressed: _addTodos, icon: Icon(Icons.add),
-
-              ),
-              
-            ],
-          ),
-          Expanded(child: ListView.builder(
-                itemCount: _todos.length,
-                itemBuilder: (_, index) => ListTile(
-                  title: Text(_todos[index]),
-                  trailing: IconButton(onPressed: () => _removeTodo(index), icon: Icon(Icons.delete)),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(child: TextField(controller: _controller)),
+                IconButton(
+                  onPressed: () {
+                    todoNotifier.add(_controller.text);
+                    _controller.clear();
+                  },
+                  icon: Icon(Icons.add),
                 ),
-              ))
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: todos.length,
+              itemBuilder:
+                  (_, index) => ListTile(
+                    title: Text(todos[index]),
+                    trailing: IconButton(
+                      onPressed: () {
+                        todoNotifier.remove(index);
+                      },
+                      icon: Icon(Icons.delete),
+                    ),
+                  ),
+            ),
+          ),
         ],
       ),
     );

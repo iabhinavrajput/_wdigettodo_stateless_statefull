@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TodoNotifier extends StateNotifier<List<String>> {
   TodoNotifier() : super([]);
-  void main(String task) {
+  void add(String task) {
     if (task.isNotEmpty) {
       state = [...state, task];
     }
