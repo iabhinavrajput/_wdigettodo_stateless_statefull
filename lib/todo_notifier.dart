@@ -1,27 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:todo/todo_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'todo_model.dart';
+import 'todo_repository.dart';
 
-class TodoNotifier extends StateNotifier<List<Todo>> {
-  TodoNotifier() : super([]);
+final todoRepositoryProvider = Provider((ref) {
+  return TodoRepository(FirebaseFirestore.instance, FirebaseAuth.instance);
+});
 
-  void add(String text) {
-    if (text.isNotEmpty) {
-      state = [...state, Todo(text: text)];
-    }
-  }
+final todoListProvider = StreamProvider<List<Todo>>((ref) {
+  return ref.watch(todoRepositoryProvider).getTodos();
+});
 
-  void remove(int index) {
-    final updated = [...state]..removeAt(index);
-    state = updated;
-  }
-
-  void toggleDone(int index) {
-    final updated = [...state];
-    updated[index] = updated[index].toogleDone();
-    state = updated;
-  }
-}
-
-final todoProvider = StateNotifierProvider<TodoNotifier, List<Todo>>(
-  (ref) => TodoNotifier(),
-);
+final todoControllerProvider = Provider((ref) {
+  return ref.watch(todoRepositoryProvider);
+});

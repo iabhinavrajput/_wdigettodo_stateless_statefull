@@ -1,95 +1,35 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:todo/auth_provider.dart';
-import 'package:todo/firebase_options.dart';
-import 'package:todo/todo_notifier.dart';
+import 'package:todo/login_screen.dart';
+import 'package:todo/to_do.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(ProviderScope(child: MyApp()));
+  await Firebase.initializeApp();
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: TodoApp());
-  }
-}
-
-class TodoApp extends ConsumerWidget {
-  final _controller = TextEditingController();
-  @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
-    return authState.when(
-      data: (user) {
-        if (user != null) {
-          return TodoApp();
-        } else {
-          return LoginScreen();
-        }
-      },
-      loading: () => Scaffold(body: Center(child: CircularProgressIndicator(),),),
-      error: (e,_) => Scaffold(body: Center(child: Text('Error: $e'),),)
-    );
-    // final todos = ref.watch(todoProvider);
-    // final todoNotifier = ref.read(todoProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(title: Text("To-Do with riverpod")),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(child: TextField(controller: _controller)),
-                IconButton(
-                  onPressed: () {
-                    todoNotifier.add(_controller.text);
-                    _controller.clear();
-                  },
-                  icon: Icon(Icons.add),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: todos.length,
-              itemBuilder: (_, index) {
-                final todo = todos[index];
-                return ListTile(
-                  leading: Checkbox(
-                    value: todo.isDone,
-                    onChanged: (_) {
-                      todoNotifier.toggleDone(index);
-                    },
-                  ),
-                  title: Text(
-                    todo.text,
-                    style: TextStyle(
-                      decoration:
-                          todo.isDone ? TextDecoration.lineThrough : null,
-                    ),
-                  ),
-                  trailing: IconButton(
-                    onPressed: () {
-                      todoNotifier.remove(index);
-                    },
-                    icon: Icon(Icons.delete),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: authState.when(
+        data: (user) {
+          if (user != null) {
+            return  TodoApp();
+          } else {
+            return  LoginScreen();
+          }
+        },
+        loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+        error: (e, _) => Scaffold(body: Center(child: Text('Error: \$e'))),
       ),
     );
   }
