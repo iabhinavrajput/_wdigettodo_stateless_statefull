@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:todo/todo_model.dart';
 import 'package:todo/todo_notifier.dart';
 import 'package:todo/auth_provider.dart';
@@ -18,10 +19,7 @@ class TodoApp extends ConsumerWidget {
       appBar: AppBar(
         title: const Text("To-Do with Firestore & Riverpod"),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: auth.signOut,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: auth.signOut),
         ],
       ),
       body: Column(
@@ -33,9 +31,7 @@ class TodoApp extends ConsumerWidget {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter a todo',
-                    ),
+                    decoration: const InputDecoration(hintText: 'Enter a todo'),
                   ),
                 ),
                 IconButton(
@@ -52,32 +48,44 @@ class TodoApp extends ConsumerWidget {
           ),
           Expanded(
             child: todosAsync.when(
-              data: (todos) => ListView.builder(
-                itemCount: todos.length,
-                itemBuilder: (_, index) {
-                  final todo = todos[index];
-                  return ListTile(
-                    leading: Checkbox(
-                      value: todo.isDone,
-                      onChanged: (_) => todoController.toggleTodo(todo),
+              data:
+                  (todos) => ListView.builder(
+                    itemCount: todos.length,
+                    itemBuilder: (_, index) {
+                      final todo = todos[index];
+                      return ListTile(
+                        leading: Checkbox(
+                          value: todo.isDone,
+                          onChanged: (_) => todoController.toggleTodo(todo),
+                        ),
+                        title: Text(
+                          todo.text,
+                          style: TextStyle(
+                            decoration:
+                                todo.isDone ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => todoController.deleteTodo(todo.id),
+                        ),
+                      );
+                    },
+                  ),
+              loading:
+                  () => Center(
+                    child: LoadingAnimationWidget.staggeredDotsWave(
+                      color: Colors.black,
+                      size: 200,
                     ),
-                    title: Text(
-                      todo.text,
-                      style: TextStyle(
-                        decoration: todo.isDone
-                            ? TextDecoration.lineThrough
-                            : null,
-                      ),
+                  ),
+              error:
+                  (e, _) => Center(
+                    child: LoadingAnimationWidget.staggeredDotsWave(
+                      color: Colors.black,
+                      size: 50,
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => todoController.deleteTodo(todo.id),
-                    ),
-                  );
-                },
-              ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: \$e')),
+                  ),
             ),
           ),
         ],

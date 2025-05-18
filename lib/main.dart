@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:todo/auth_provider.dart';
 import 'package:todo/login_screen.dart';
 import 'package:todo/to_do.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +29,10 @@ class MyApp extends ConsumerWidget {
             return  LoginScreen();
           }
         },
-        loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+        loading: () =>  Scaffold(body: Center(child: LoadingAnimationWidget.staggeredDotsWave(
+        color: Colors.black,
+        size: 200,
+      ),)),
         error: (e, _) => Scaffold(body: Center(child: Text('Error: \$e'))),
       ),
     );
