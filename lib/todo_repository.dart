@@ -5,12 +5,11 @@ import 'todo_model.dart';
 class TodoRepository {
   final FirebaseFirestore firestore;
   final FirebaseAuth auth;
-  TodoRepository(this.firestore, this.auth);
+  final User? user;
+  TodoRepository(this.firestore, this.auth, this.user);
 
-  CollectionReference get _todoCollection => firestore
-      .collection('user')
-      .doc(auth.currentUser!.uid)
-      .collection('todos');
+  CollectionReference get _todoCollection =>
+      firestore.collection('user').doc(user!.uid).collection('todos');
 
   Stream<List<Todo>> getTodos() {
     return _todoCollection.snapshots().map((snapshot) {
