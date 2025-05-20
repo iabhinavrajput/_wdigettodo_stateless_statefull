@@ -31,7 +31,7 @@ class MyApp extends ConsumerWidget {
         },
         loading: () =>  Scaffold(body: Center(child: LoadingAnimationWidget.staggeredDotsWave(
         color: Colors.black,
-        size: 200,
+        size: 20,
       ),)),
         error: (e, _) => Scaffold(body: Center(child: Text('Error: \$e'))),
       ),

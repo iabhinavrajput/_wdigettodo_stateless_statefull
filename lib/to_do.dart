@@ -76,7 +76,7 @@ class TodoApp extends ConsumerWidget {
                   () => Center(
                     child: LoadingAnimationWidget.staggeredDotsWave(
                       color: Colors.black,
-                      size: 200,
+                      size: 50,
                     ),
                   ),
               error:
