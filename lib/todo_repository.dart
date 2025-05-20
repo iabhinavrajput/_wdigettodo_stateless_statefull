@@ -12,17 +12,25 @@ class TodoRepository {
       firestore.collection('user').doc(user!.uid).collection('todos');
 
   Stream<List<Todo>> getTodos() {
-    return _todoCollection.snapshots().map((snapshot) {
-      return snapshot.docs
-          .map(
-            (doc) => Todo.fromMap(doc.id, doc.data() as Map<String, dynamic>),
-          )
-          .toList();
-    });
+    return _todoCollection
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map(
+                (doc) =>
+                    Todo.fromMap(doc.id, doc.data() as Map<String, dynamic>),
+              )
+              .toList();
+        });
   }
 
   Future<void> addTodo(String text) {
-    return _todoCollection.add({'text': text, 'isDone': false});
+    return _todoCollection.add({
+      'text': text,
+      'isDone': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> toggleTodo(Todo todo) {
