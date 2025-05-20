@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:todo/todo_model.dart';
 import 'package:todo/todo_notifier.dart';
 import 'package:todo/auth_provider.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class TodoApp extends ConsumerStatefulWidget {
   const TodoApp({super.key});
@@ -14,7 +14,6 @@ class TodoApp extends ConsumerStatefulWidget {
 
 class _TodoAppState extends ConsumerState<TodoApp> {
   final TextEditingController _controller = TextEditingController();
-  bool _isAdding = false;
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
@@ -27,42 +26,40 @@ class _TodoAppState extends ConsumerState<TodoApp> {
     final auth = ref.read(authControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: const Text(
-          "My Tasks",
+          "Daily Tasks",
           style: TextStyle(
             fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         ),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.black54),
-            onPressed: () async {
-              await auth.signOut();
-            },
+            onPressed: () => auth.signOut(),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Input Box
+          // Input
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
@@ -73,24 +70,17 @@ class _TodoAppState extends ConsumerState<TodoApp> {
                       controller: _controller,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
-                        hintText: 'What do you need to do?',
+                        hintText: "Add a new task...",
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(
-                      Icons.add_circle,
-                      color: Colors.blueAccent,
-                    ),
+                    icon: const Icon(Icons.send, color: Colors.blueAccent),
                     onPressed: () async {
                       final text = _controller.text.trim();
                       if (text.isNotEmpty) {
-                        setState(() => _isAdding = true);
                         await todoController.addTodo(text);
-                        setState(() {
-                          _isAdding = false;
-                          _controller.clear();
-                        });
+                        _controller.clear();
                       }
                     },
                   ),
@@ -98,93 +88,61 @@ class _TodoAppState extends ConsumerState<TodoApp> {
               ),
             ),
           ),
-          // Todo List
+          // Task list
           Expanded(
             child: todosAsync.when(
               data: (todos) {
-                final reversedTodos = todos.reversed.toList();
+                final sortedTodos = todos
+                    .where((t) => t.createdAt != null)
+                    .toList()
+                  ..sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+
+                if (sortedTodos.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No tasks yet. Start by adding one!',
+                      style: TextStyle(color: Colors.black54, fontSize: 16),
+                    ),
+                  );
+                }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: reversedTodos.length + (_isAdding ? 1 : 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  itemCount: sortedTodos.length,
                   itemBuilder: (_, index) {
-                    // Optimistic shimmer at top
-                    if (_isAdding && index == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: ListTile(
-                            leading: const CircularProgressIndicator(),
-                            title: Container(
-                              height: 16,
-                              width: double.infinity,
-                              color: Colors.grey[300],
-                            ),
-                            subtitle: Container(
-                              height: 12,
-                              width: 100,
-                              margin: const EdgeInsets.only(top: 8),
-                              color: Colors.grey[200],
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-
-                    final todo = reversedTodos[_isAdding ? index - 1 : index];
+                    final todo = sortedTodos[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Card(
-                        elevation: 3,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
+                        elevation: 2,
+                        color: todo.isDone ? Colors.grey[200] : Colors.white,
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 8,
-                          ),
                           leading: Checkbox(
                             value: todo.isDone,
-                            activeColor: Colors.blueAccent,
+                            activeColor: Colors.green,
                             onChanged: (_) => todoController.toggleTodo(todo),
                           ),
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                todo.text,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  decoration: todo.isDone
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  color: todo.isDone
-                                      ? Colors.grey
-                                      : Colors.black87,
-                                ),
-                              ),
-                              if (todo.createdAt != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4.0),
-                                  child: Text(
-                                    'Added on ${_formatDate(todo.createdAt!)}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black45,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.redAccent,
+                          title: Text(
+                            todo.text,
+                            style: TextStyle(
+                              fontSize: 16,
+                              decoration: todo.isDone
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                              color: todo.isDone ? Colors.grey : Colors.black87,
                             ),
+                          ),
+                          subtitle: todo.createdAt != null
+                              ? Text(
+                                  'Added on ${_formatDate(todo.createdAt!)}',
+                                  style: const TextStyle(fontSize: 12),
+                                )
+                              : null,
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                             onPressed: () => todoController.deleteTodo(todo.id),
                           ),
                         ),
@@ -201,7 +159,7 @@ class _TodoAppState extends ConsumerState<TodoApp> {
               ),
               error: (e, _) => const Center(
                 child: Text(
-                  'Error loading todos.',
+                  'Something went wrong!',
                   style: TextStyle(color: Colors.redAccent),
                 ),
               ),
