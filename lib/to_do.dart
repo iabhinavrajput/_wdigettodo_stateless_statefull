@@ -15,6 +15,18 @@ class TodoApp extends ConsumerStatefulWidget {
 class _TodoAppState extends ConsumerState<TodoApp> {
   final TextEditingController _controller = TextEditingController();
 
+  String? _selectedTag = 'General';
+  String? _selectedPriority = 'Medium';
+
+  final List<String> _tags = ['General', 'Work', 'Personal', 'Shopping', 'Others'];
+  final List<String> _priorities = ['High', 'Medium', 'Low'];
+
+  final Map<String, Color> priorityColors = {
+    'High': Colors.redAccent,
+    'Medium': Colors.orangeAccent,
+    'Low': Colors.greenAccent,
+  };
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
@@ -47,11 +59,11 @@ class _TodoAppState extends ConsumerState<TodoApp> {
       ),
       body: Column(
         children: [
-          // Input
+          // Input + Dropdowns
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
@@ -63,26 +75,82 @@ class _TodoAppState extends ConsumerState<TodoApp> {
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Add a new task...",
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: "Add a new task...",
+                          ),
+                        ),
                       ),
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.send, color: Colors.blueAccent),
+                        onPressed: () async {
+                          final text = _controller.text.trim();
+                          if (text.isNotEmpty) {
+                            await todoController.addTodo(
+                              text,
+                              tag: _selectedTag!,
+                              priority: _selectedPriority!,
+                            );
+                            _controller.clear();
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Colors.blueAccent),
-                    onPressed: () async {
-                      final text = _controller.text.trim();
-                      if (text.isNotEmpty) {
-                        await todoController.addTodo(text);
-                        _controller.clear();
-                      }
-                    },
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      // Tag Dropdown
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedTag,
+                          items: _tags
+                              .map((tag) => DropdownMenuItem(
+                                    value: tag,
+                                    child: Text(tag),
+                                  ))
+                              .toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Tag',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedTag = val;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Priority Dropdown
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedPriority,
+                          items: _priorities
+                              .map((p) => DropdownMenuItem(
+                                    value: p,
+                                    child: Text(p),
+                                  ))
+                              .toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Priority',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedPriority = val;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -111,10 +179,13 @@ class _TodoAppState extends ConsumerState<TodoApp> {
                   itemCount: sortedTodos.length,
                   itemBuilder: (_, index) {
                     final todo = sortedTodos[index];
+                    final priorityColor = priorityColors[todo.priority ?? 'Medium'] ?? Colors.orangeAccent;
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Card(
                         shape: RoundedRectangleBorder(
+                          side: BorderSide(color: priorityColor, width: 3),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 2,
@@ -122,7 +193,7 @@ class _TodoAppState extends ConsumerState<TodoApp> {
                         child: ListTile(
                           leading: Checkbox(
                             value: todo.isDone,
-                            activeColor: Colors.green,
+                            activeColor: priorityColor,
                             onChanged: (_) => todoController.toggleTodo(todo),
                           ),
                           title: Text(
@@ -135,12 +206,28 @@ class _TodoAppState extends ConsumerState<TodoApp> {
                               color: todo.isDone ? Colors.grey : Colors.black87,
                             ),
                           ),
-                          subtitle: todo.createdAt != null
-                              ? Text(
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (todo.tag != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4.0),
+                                  child: Text(
+                                    'Tag: ${todo.tag}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: priorityColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              if (todo.createdAt != null)
+                                Text(
                                   'Added on ${_formatDate(todo.createdAt!)}',
                                   style: const TextStyle(fontSize: 12),
-                                )
-                              : null,
+                                ),
+                            ],
+                          ),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                             onPressed: () => todoController.deleteTodo(todo.id),

@@ -7,9 +7,12 @@ import 'todo_repository.dart';
 
 final todoRepositoryProvider = Provider((ref) {
   final user = ref.watch(authStateProvider).asData?.value;
-  return TodoRepository(FirebaseFirestore.instance, FirebaseAuth.instance, user);
+  return TodoRepository(
+    FirebaseFirestore.instance,
+    FirebaseAuth.instance,
+    user,
+  );
 });
-
 
 final todoListProvider = StreamProvider<List<Todo>>((ref) {
   final user = ref.watch(authStateProvider).asData?.value;
@@ -22,7 +25,6 @@ final todoListProvider = StreamProvider<List<Todo>>((ref) {
   final repo = ref.watch(todoRepositoryProvider);
   return repo.getTodos();
 });
-
 
 final todoControllerProvider = Provider((ref) {
   return ref.watch(todoRepositoryProvider);

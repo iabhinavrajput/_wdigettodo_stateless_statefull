@@ -25,11 +25,17 @@ class TodoRepository {
         });
   }
 
-  Future<void> addTodo(String text) {
+  Future<void> addTodo(
+    String text, {
+    String tag = 'General',
+    String priority = 'Medium',
+  }) {
     return _todoCollection.add({
       'text': text,
       'isDone': false,
       'createdAt': FieldValue.serverTimestamp(),
+      'tag': tag,
+      'priority': priority,
     });
   }
 
